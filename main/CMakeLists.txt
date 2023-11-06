@@ -4,9 +4,6 @@ CMAKE_MINIMUM_REQUIRED (VERSION 3.10)
 SET(PROJECT_NAME "delay_uplink_fix")
 PROJECT("${PROJECT_NAME}")
 
-add_subdirectory(packetIO)
-add_subdirectory(dci_sink)
-
 INCLUDE(GNUInstallDirs)
 add_executable(main_uplink main.c dci_sink_client.c)
 
