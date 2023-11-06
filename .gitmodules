@@ -1,6 +1,8 @@
 [submodule "packetIO"]
 	path = packetIO
 	url = git@github.com:YaxiongXiePrinceton/packetIO.git
+	branch = main
 [submodule "dci_sink"]
 	path = dci_sink
 	url = git@github.com:YaxiongXiePrinceton/dci_sink.git
+	branch = main
