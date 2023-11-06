@@ -21,18 +21,35 @@
 #include "dci_sink_ring_buffer.h"
 #include "dci_sink_sock.h"
 
+
+#include "load_config.h"
+#include "time_stamp.h"
+
 extern bool go_exit;
 extern ngscope_dci_sink_CA_t dci_CA_buf;
 
 // connect server
 void *dci_sink_client_thread(void *p) {
-  char serv_IP[40] = "127.0.0.1";
-  int serv_port = 6767;
-  char recvBuf[1400];
+  /*******  DCI server configuration ********/
+  char dci_serv_IP[40] = "127.0.0.1";
+  int dci_serv_port = 6767;
+  char recvBuf[1500];
+  char sendBuf[1500];
   struct sockaddr_in cliaddr;
-
-  // connect the server
+  // connect to the DCI server
   int sockfd = sock_connectServer_w_config_udp(serv_IP, serv_port);
+  /*******  END of DCI server configuration ********/
+  
+  serv_cli_config_t* config = (serv_cli_config_t *)p;
+  int sock_fd;
+  struct sockaddr_in remote_addr;
+  remote_addr = sock_create_serv_addr(config.remote_IP, config.remote_port);
+  // basically notify the remote about us 
+  // very important if the server want to send something back to us
+  connection_starter(sock_fd, remote_addr);
+
+  int last_ca_header;
+
   socklen_t len;
   while (!go_exit) {
     if (go_exit)
@@ -57,8 +74,22 @@ void *dci_sink_client_thread(void *p) {
           buf_idx = ret;
         }
       }
-      // offset = shift_recv_buffer(recvBuf, buf_idx, recvLen);
-      // printf("recvLen: %d buf_idx: %d \n\n", recvLen, buf_idx);
+      // if the CA header is updated
+      int new_header = ngscope_dciSink_ringBuf_header_update(&dci_CA_buf, last_ca_header);
+      if(new_header){
+        // example: send dci to the remote 
+        // TODO Yuxin: change it to transmit ur trans-buffer or anything
+        ue_dci_t ue_dci = ngscope_dciSink_ringBuf_fetch_dci(&dci_CA_buf, 0, new_header);
+        pkt_header_t pkt_header;
+        pkt_header.sequence_number = 0;
+        pkt_header.sent_timestamp = timestamp_us();
+        pkt_header.recv_timestamp = 0;
+        pkt_header.pkt_type    = 3; // 1 DATA 2 ACK 3 DCI
+        int pkt_size = packet_generate(sendBuf, &pkt_header, (void *)&ue_dci, sizeof(ue_dci_t));
+
+        // send the dci packet to the remote
+        sock_pkt_send_single(sock_fd, remote_addr, sendBuf, pkt_size);
+      }
     }
   }
   // close the connection with server
