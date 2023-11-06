@@ -97,7 +97,7 @@ int main(int argc, char **argv) {
     sock_cmd_sent_w_type(sock_fd, remote_addr, CON_CLOSE);
   } else {
     // receiver
-    sock_pkt_recv_multi_no_output(sock_fd, remote_addr, fd);
+    sock_pkt_recv_multi_no_ack(sock_fd, fd);
   }
 
   fclose(fd);
