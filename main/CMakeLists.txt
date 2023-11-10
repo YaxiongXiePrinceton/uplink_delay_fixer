@@ -5,7 +5,7 @@ SET(PROJECT_NAME "delay_uplink_fix")
 PROJECT("${PROJECT_NAME}")
 
 INCLUDE(GNUInstallDirs)
-add_executable(main_uplink main.c dci_sink_client.c)
+add_executable(main_uplink main.c dci_sink_client.c pkt_txrx.c)
 
 find_package(libconfig CONFIG REQUIRED)
 set(CMAKE_PREFIX_PATH "/usr/local/lib/" ${CMAKE_PREFIX_PATH})

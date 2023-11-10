@@ -21,13 +21,12 @@
 #include "dci_sink_ring_buffer.h"
 #include "dci_sink_sock.h"
 
-
+#include "connection.h"
 #include "load_config.h"
-#include "time_stamp.h"
 #include "packet.h"
 #include "sock.h"
 #include "sock_pkt_txrx.h"
-#include "connection.h"
+#include "time_stamp.h"
 
 extern bool go_exit;
 extern ngscope_dci_sink_CA_t dci_CA_buf;
@@ -43,12 +42,12 @@ void *dci_sink_client_thread(void *p) {
   // connect to the DCI server
   int sockfd = sock_connectServer_w_config_udp(dci_serv_IP, dci_serv_port);
   /*******  END of DCI server configuration ********/
-  
-  serv_cli_config_t* config = (serv_cli_config_t *)p;
+
+  serv_cli_config_t *config = (serv_cli_config_t *)p;
   int sock_fd;
   struct sockaddr_in remote_addr;
   remote_addr = sock_create_serv_addr(config->remote_IP, config->remote_port);
-  // basically notify the remote about us 
+  // basically notify the remote about us
   // very important if the server want to send something back to us
   connection_starter(sock_fd, remote_addr);
 
@@ -79,17 +78,20 @@ void *dci_sink_client_thread(void *p) {
         }
       }
       // if the CA header is updated
-      int new_header = ngscope_dciSink_ringBuf_header_update(&dci_CA_buf, last_ca_header);
-      if(new_header){
-        // example: send dci to the remote 
+      int new_header =
+          ngscope_dciSink_ringBuf_header_updated(&dci_CA_buf, last_ca_header);
+      if (new_header) {
+        // example: send dci to the remote
         // TODO Yuxin: change it to transmit ur trans-buffer or anything
-        ue_dci_t ue_dci = ngscope_dciSink_ringBuf_fetch_dci(&dci_CA_buf, 0, new_header);
+        ue_dci_t ue_dci =
+            ngscope_dciSink_ringBuf_fetch_dci(&dci_CA_buf, 0, new_header);
         pkt_header_t pkt_header;
         pkt_header.sequence_number = 0;
         pkt_header.sent_timestamp = timestamp_us();
         pkt_header.recv_timestamp = 0;
-        pkt_header.pkt_type    = 3; // 1 DATA 2 ACK 3 DCI
-        int pkt_size = packet_generate(sendBuf, &pkt_header, (void *)&ue_dci, sizeof(ue_dci_t));
+        pkt_header.pkt_type = 3; // 1 DATA 2 ACK 3 DCI
+        int pkt_size = packet_generate(sendBuf, &pkt_header, (void *)&ue_dci,
+                                       sizeof(ue_dci_t));
 
         // send the dci packet to the remote
         sock_pkt_send_single(sock_fd, remote_addr, sendBuf, pkt_size);
