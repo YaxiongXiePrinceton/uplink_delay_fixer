@@ -24,6 +24,10 @@
 
 #include "load_config.h"
 #include "time_stamp.h"
+#include "packet.h"
+#include "sock.h"
+#include "sock_pkt_txrx.h"
+#include "connection.h"
 
 extern bool go_exit;
 extern ngscope_dci_sink_CA_t dci_CA_buf;
@@ -37,13 +41,13 @@ void *dci_sink_client_thread(void *p) {
   char sendBuf[1500];
   struct sockaddr_in cliaddr;
   // connect to the DCI server
-  int sockfd = sock_connectServer_w_config_udp(serv_IP, serv_port);
+  int sockfd = sock_connectServer_w_config_udp(dci_serv_IP, dci_serv_port);
   /*******  END of DCI server configuration ********/
   
   serv_cli_config_t* config = (serv_cli_config_t *)p;
   int sock_fd;
   struct sockaddr_in remote_addr;
-  remote_addr = sock_create_serv_addr(config.remote_IP, config.remote_port);
+  remote_addr = sock_create_serv_addr(config->remote_IP, config->remote_port);
   // basically notify the remote about us 
   // very important if the server want to send something back to us
   connection_starter(sock_fd, remote_addr);
