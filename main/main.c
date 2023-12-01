@@ -26,9 +26,12 @@
 #include "sock_pkt_txrx.h"
 
 #include "dci_sink_ring_buffer.h"
+#include "dci_ul_reTx.h"
 
 bool go_exit;
 ngscope_dci_sink_CA_t dci_CA_buf;
+ngscope_ul_trans_buf_t dci_reTx_buf;
+ngscope_ul_trans_buf_t dci_ueSh_buf;
 
 int main(int argc, char **argv) {
   int c;
@@ -72,11 +75,18 @@ int main(int argc, char **argv) {
   printf("SEND %d PACKETS!\n", pkt_tx_config.pkt_size);
 
   // we only care about the uplink now
+  pthread_t dci_thd;
+  // pthread_create(&dci_thd, NULL, dci_sink_client_thread,
+  //                  (serv_cli_config_t *)config);
+  // pthread_create(&dci_thd, NULL, dci_sink_client_thread,
+  //                  (void *)config.remote_IP);
+
   if (config.sender) {
-    pthread_t dci_thd;
+    // pthread_t dci_thd;
     pthread_create(&dci_thd, NULL, dci_sink_client_thread,
                    (void *)config.remote_IP);
-    pthread_join(dci_thd, NULL);
+    // pthread_join(dci_thd, NULL);
+    // sleep(5);
   }
   int sock_fd = 0;
   sock_fd = sock_create_udp_socket(config.local_IP, config.local_port);
@@ -97,7 +107,12 @@ int main(int argc, char **argv) {
     sock_cmd_sent_w_type(sock_fd, remote_addr, CON_CLOSE);
   } else {
     // receiver
-    sock_pkt_recv_multi_no_ack(sock_fd, fd);
+    // sock_pkt_recv_multi_no_ack(sock_fd, fd);
+    sock_pkt_recv_para_no_ack(sock_fd, fd);
+  }
+
+  if (config.sender) {
+    pthread_join(dci_thd, NULL);
   }
 
   fclose(fd);
